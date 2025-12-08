@@ -1,0 +1,95 @@
+# class Soda:
+#     def __init__(self, taste = None):
+#         self.taste = taste
+#
+#     def __str__(self):
+#         if self.taste:
+#             return f"У вас газировка с {self.taste} вкусом"
+#         else:
+#             return f"У вас обычная газировка"
+#
+# print(Soda("клубничным"))
+import time
+
+class ATM:
+    def __init__(self,balance = 500, history = [], pin = '3109', is_locked = True):
+        self.balance = balance
+        self.history = history
+        self.pin = pin
+        self.is_locked = is_locked
+
+    def unlock(self):
+        if self.is_locked:
+            unlocker = input("Введите код ")
+            if unlocker == self.pin:
+                self.is_locked = False
+                self._work()
+            else:
+                print("Неверный пин-код")
+
+
+    def __task1(self):
+        print(f"Ваш баланс {self.balance}")
+        self._work()
+
+    def __task2(self):
+        try:
+            balance_remove = int(input("Сколько денег желаете снять? "))
+            if balance_remove > self.balance:
+                print("Недостаточно средств")
+                self.history.append(("Снятие, Ошибка! ", time.ctime()))
+                self._work()
+            else:
+                print("Операция прошла успешно")
+                self.balance -= balance_remove
+                self.history.append(("Снятие ", balance_remove, time.ctime()))
+                self._work()
+        except Exception:
+            print("Введите число!")
+            self.__task2()
+
+    def __task3(self):
+        try:
+            balance_add = int(input("Сколько денег желаете пополнить? "))
+            self.balance += balance_add
+            print("Операция прошла успешно")
+            self.history.append(("Пополнение ", balance_add, time.ctime()))
+            self._work()
+        except Exception:
+            print("Введите число!")
+            self.__task3()
+
+    def __task4(self):
+        print(*self.history)
+        self._work()
+
+    def _work(self):
+
+        print(f"\n"
+          f"Введите номер операции\n"
+          f"1. Проверить баланс\n"
+          f"2. Снять деньги\n"
+          f"3. Пополнить счет \n"
+          f"4. История операций\n"
+          f"5. Выйти\n")
+        task = int(input())
+        if task == 1:
+            self.__task1()
+        elif task == 2:
+            self.__task2()
+        elif task == 3:
+            self.__task3()
+        elif task == 4:
+            self.__task4()
+        elif task == 5:
+            print("Выход из программы.")
+            global status
+            status = False
+        else:
+            print("Пожалуйста, введите корректную задачу.")
+            self._work()
+status = True
+atm = ATM()
+while status:
+    atm.unlock()
+
