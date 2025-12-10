@@ -1,0 +1,89 @@
+from contextlib import nullcontext
+
+import requests
+import telebot
+
+TOKEN = ''
+
+class TelegramBot:
+    def __init__(self):
+        self.bot = telebot.TeleBot(TOKEN)
+        self.api = NBRBClient()
+
+    def create_keyboard(self):
+        self.keyboard = telebot.types.ReplyKeyboardMarkup(True)
+        self.keyboard.add('/start')
+
+    def runbot(self):
+        self.commands()
+        self.create_keyboard()
+        self.bot.polling()
+
+    def commands(self):
+        @self.bot.message_handler(commands=['start'])
+        def start(message):
+            self.bot.send_message(message.chat.id, "Добро пожаловать\n"
+                                                   f"Выберите валюту\n"
+                                                   f"{"\n".join(str(item) for item in self.api.get_abbreviation())}"
+                                                   f"\nНапример 'USD'",reply_markup=None)
+            self.bot.register_next_step_handler(message, enter_currency)
+
+        def enter_currency(message):
+            if message.text in self.api.get_names():
+                self.currency = message.text
+                self.url_2 = f"https://api.nbrb.by/exrates/rates/{message.text}]?parammode=2"
+                self.bot.send_message(message.chat.id, f"Вы выбрали {message.text}\n"
+                                                       f"{self.api.current(self.url_2)}"
+                                                       f"\nВведите сумму")
+                self.bot.register_next_step_handler(message, enter_sum)
+            else:
+                self.bot.send_message(message.chat.id, f"Аббревиатура не найдена"
+                                                       f"\nПроверьте написание и попробуйте снова")
+                self.bot.register_next_step_handler(message, enter_currency)
+
+
+        def enter_sum(message):
+            try:
+                if float(message.text) >= 1000000000000:
+                    self.bot.send_message(message.chat.id, f"Самый богатый? Вводи адекватное число")
+                    self.bot.register_next_step_handler(message, enter_sum)
+                else:
+                    self.bot.send_message(message.chat.id, f"{message.text} {self.currency} в BYN = "
+                                                       f"{self.api.get_value(float(message.text), self.url_2)}\n"
+                                          ,reply_markup=self.keyboard)
+            except ValueError:
+                self.bot.send_message(message.chat.id,"Пожалуйста введите число, а не строку и т.д")
+                self.bot.register_next_step_handler(message, enter_sum)
+
+
+
+class NBRBClient:
+    def __init__(self):
+        self.url = "https://api.nbrb.by/exrates/rates?periodicity=0"
+
+    def current(self,url2):
+        r = requests.get(url2)
+        data = r.json()
+        return(f"Текущий курс: {data["Cur_Scale"]} {data["Cur_Abbreviation"]} = {data["Cur_OfficialRate"]} BYN")
+
+    def get_value(self,value, url2):
+        r = requests.get(url2)
+        data = r.json()
+        return (data["Cur_OfficialRate"] * value) / data["Cur_Scale"]
+
+    def get_abbreviation(self):
+        r = requests.get(self.url)
+        data = r.json()
+        a = [(y['Cur_Abbreviation'], y['Cur_Name']) for y in data]
+        return a
+
+    def get_names(self):
+        r = requests.get(self.url)
+        data = r.json()
+        a = [y['Cur_Abbreviation'] for y in data]
+        return a
+
+
+if __name__ == '__main__':
+    bot = TelegramBot()
+    bot.runbot()
