@@ -1,0 +1,45 @@
+import sqlite3
+import random
+
+conn = sqlite3.connect('test2.db')
+cursor = conn.cursor()
+#
+# cursor.execute("""
+#     CREATE TABLE employees (
+#         id INTEGER PRIMARY KEY,
+#         login VARCHAR(100),
+#         password VARCHAR(100),
+#         salary DECIMAL(10,2)
+#         );""")
+#
+# cursor.execute("""
+# INSERT INTO employees (id, login, password, salary)
+# VALUES (1,'John_Doe','4839', 50000),
+#        (2,'Big Boss','1748', 80000),
+#        (3,'Istirdoge','6930', 30000)
+# """)
+# conn.commit()
+# cursor.execute("SELECT * FROM employees")
+# rows = cursor.fetchall()
+# print(rows)
+
+a = input('Введите логин: ')
+b = input('Введите пароль: ')
+cursor.execute(
+    "SELECT salary FROM employees WHERE login = ? AND password = ?", (a, b)
+)
+result = cursor.fetchall()
+if result != []:
+    print(*result)
+else:
+    print('Неверный логин или пароль')
+reg_login = input('Введите логин: ')
+reg_pass = input('Введите пароль:')
+salary_value = random.choice([10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000])
+cursor.execute(
+    "INSERT INTO employees (id, login, password, salary) VALUES (?, ?, ?, ?)",
+    (4, reg_login, reg_pass, salary_value)
+)
+cursor.execute("SELECT * FROM employees")
+rows = cursor.fetchall()
+print(rows)
